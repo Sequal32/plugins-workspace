@@ -9,7 +9,7 @@
     html_favicon_url = "https://github.com/tauri-apps/tauri/raw/dev/app-icon.png"
 )]
 
-use server::ServerManager;
+use server::{ServerConnectionManager, ServerManager};
 use tauri::{
     plugin::{Builder as PluginBuilder, TauriPlugin},
     Manager, Runtime,
@@ -60,6 +60,7 @@ impl Builder {
             ])
             .setup(|app, _api| {
                 app.manage(ConnectionManager::default());
+                app.manage(ServerConnectionManager::default());
                 app.manage(ServerManager::default());
                 #[cfg(any(feature = "rustls-tls", feature = "native-tls"))]
                 app.manage(TlsConnector(Mutex::new(self.tls_connector)));
