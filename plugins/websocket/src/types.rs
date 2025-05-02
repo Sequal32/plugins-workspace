@@ -25,6 +25,14 @@ pub enum Error {
     InvalidHeaderValue(#[from] tokio_tungstenite::tungstenite::http::header::InvalidHeaderValue),
     #[error(transparent)]
     InvalidHeaderName(#[from] tokio_tungstenite::tungstenite::http::header::InvalidHeaderName),
+    #[error("failed to stop server {0}")]
+    FailedToStopServer(Id),
+    #[error("server not found for the given id: {0}")]
+    ServerNotFound(Id),
+    #[error("connection channel closed for the given id: {0}")]
+    ConnectionClosed(Id, tauri::Error),
+    #[error("invalid message type")]
+    InvalidMessageType,
 }
 
 impl Serialize for Error {

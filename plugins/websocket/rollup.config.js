@@ -4,4 +4,4 @@
 
 import { createConfig } from '../../shared/rollup.config.js'
 
-export default createConfig()
+export default createConfig({ external: ["@tauri-apps/api/core", "events"] })

@@ -3,6 +3,7 @@
 // SPDX-License-Identifier: MIT
 
 import { invoke, Channel } from '@tauri-apps/api/core'
+import { EventEmitter } from 'events'
 
 export interface ConnectionConfig {
   /**
@@ -55,8 +56,9 @@ export type Message =
   | MessageKind<'Ping', number[]>
   | MessageKind<'Pong', number[]>
   | MessageKind<'Close', CloseFrame | null>
+  | MessageKind<'Error', string> // Can only be received from Rust, should never be constructed
 
-export default class WebSocket {
+export class WebSocket {
   id: number
   private readonly listeners: Set<(arg: Message) => void>
 
@@ -123,6 +125,89 @@ export default class WebSocket {
         code: 1000,
         reason: 'Disconnected by client'
       }
+    })
+  }
+}
+
+export class WebSocketServer extends EventEmitter {
+  id: number
+
+  constructor(id: number) {
+    super()
+    this.id = id
+  }
+
+  static async start(port: number): Promise<WebSocketServer> {
+    const onConnection = new Channel<Message>()
+
+    // Request a new server on the specified port
+    let newServerId = await invoke<number>('plugin:websocket|new_server', {
+      port,
+      onConnection
+    })
+
+    let newServer = new WebSocketServer(newServerId)
+
+    // Emit everytime a connection is spawned
+    onConnection.onmessage = async (response: Message) => {
+      if (response.type != 'Text') return
+      let connId = JSON.parse(response.data)
+
+      newServer.emit('connection', WebSocketServerConnection.start(connId))
+    }
+
+    return newServer
+  }
+
+  async close(): Promise<void> {
+    await invoke('plugin:websocket|stop_server', { id: this.id })
+  }
+}
+
+export class WebSocketServerConnection extends EventEmitter {
+  id: number
+
+  constructor(id: number) {
+    super()
+    this.id = id
+  }
+
+  static async start(id: number): Promise<WebSocketServerConnection> {
+    const onMessage = new Channel<Message>()
+    // Subscribe to connection
+    await invoke<number>('plugin:websocket|subscribe_server', { id, onMessage })
+
+    let newConnection = new WebSocketServerConnection(id)
+
+    onMessage.onmessage = async (response: Message) => {
+      if (response.type == 'Text') {
+        newConnection.emit('message', response.data)
+      } else if (response.type == 'Close') {
+        newConnection.emit('close')
+      } else if (response.type == 'Error') {
+        newConnection.emit('error', response.data)
+      }
+    }
+
+    return newConnection
+  }
+
+  async send(message: Message | string | number): Promise<void> {
+    let m: Message
+    if (typeof message === 'string') {
+      m = { type: 'Text', data: message }
+    } else if (typeof message === 'object' && 'type' in message) {
+      m = message
+    } else if (Array.isArray(message)) {
+      m = { type: 'Binary', data: message }
+    } else {
+      throw new Error(
+        'invalid `message` type, expected a `{ type: string, data: any }` object, a string or a numeric array'
+      )
+    }
+    await invoke('plugin:websocket|send_server_conn', {
+      id: this.id,
+      message: m
     })
   }
 }

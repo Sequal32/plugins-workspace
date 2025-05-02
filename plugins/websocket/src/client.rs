@@ -110,6 +110,7 @@ pub async fn send(
                     code: v.code.into(),
                     reason: v.reason.into(),
                 })),
+                WebSocketMessage::Error(e) => Message::Text(e.into()),
             })
             .await?;
         Ok(())

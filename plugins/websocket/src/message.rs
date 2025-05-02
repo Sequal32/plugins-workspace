@@ -14,4 +14,5 @@ pub enum WebSocketMessage {
     Ping(Vec<u8>),
     Pong(Vec<u8>),
     Close(Option<CloseFrame>),
+    Error(String),
 }

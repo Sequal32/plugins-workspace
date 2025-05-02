@@ -15,6 +15,7 @@
     "@rollup/plugin-node-resolve": "16.0.1",
     "@rollup/plugin-terser": "0.4.4",
     "@rollup/plugin-typescript": "12.1.2",
+    "rollup-plugin-polyfill-node": "0.13.0",
     "covector": "^0.12.4",
     "eslint": "9.25.1",
     "eslint-config-prettier": "10.1.2",

@@ -6,6 +6,7 @@ import { readFileSync } from 'node:fs'
 import { dirname, join } from 'node:path'
 import { cwd } from 'node:process'
 import { nodeResolve } from '@rollup/plugin-node-resolve'
+import nodePolyfills from 'rollup-plugin-polyfill-node';
 import typescript from '@rollup/plugin-typescript'
 import terser from '@rollup/plugin-terser'
 
@@ -79,7 +80,7 @@ export function createConfig(options = {}) {
         file: 'api-iife.js'
       },
       // and var is not guaranteed to assign to the global `window` object so we make sure to assign it
-      plugins: [typescript(), terser(), nodeResolve()],
+      plugins: [typescript(), terser(), nodePolyfills(), nodeResolve()],
       onwarn: (warning) => {
         throw Object.assign(new Error(), warning)
       }
