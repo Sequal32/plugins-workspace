@@ -152,6 +152,12 @@ impl ServerConnectionManager {
     }
 }
 
+impl Default for ServerConnectionManager {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 fn convert_message_to_value(message: Message) -> serde_json::Value {
     match message {
         Message::Text(t) => serde_json::to_value(WebSocketMessage::Text(t.to_string())).unwrap(),
