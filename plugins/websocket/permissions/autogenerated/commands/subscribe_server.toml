@@ -1,0 +1,13 @@
+# Automatically generated - DO NOT EDIT!
+
+"$schema" = "../../schemas/schema.json"
+
+[[permission]]
+identifier = "allow-subscribe-server"
+description = "Enables the subscribe_server command without any pre-configured scope."
+commands.allow = ["subscribe_server"]
+
+[[permission]]
+identifier = "deny-subscribe-server"
+description = "Denies the subscribe_server command without any pre-configured scope."
+commands.deny = ["subscribe_server"]

@@ -319,6 +319,42 @@
           "markdownDescription": "Denies the send command without any pre-configured scope."
         },
         {
+          "description": "Enables the send_server_conn command without any pre-configured scope.",
+          "type": "string",
+          "const": "allow-send-server-conn",
+          "markdownDescription": "Enables the send_server_conn command without any pre-configured scope."
+        },
+        {
+          "description": "Denies the send_server_conn command without any pre-configured scope.",
+          "type": "string",
+          "const": "deny-send-server-conn",
+          "markdownDescription": "Denies the send_server_conn command without any pre-configured scope."
+        },
+        {
+          "description": "Enables the stop_server command without any pre-configured scope.",
+          "type": "string",
+          "const": "allow-stop-server",
+          "markdownDescription": "Enables the stop_server command without any pre-configured scope."
+        },
+        {
+          "description": "Denies the stop_server command without any pre-configured scope.",
+          "type": "string",
+          "const": "deny-stop-server",
+          "markdownDescription": "Denies the stop_server command without any pre-configured scope."
+        },
+        {
+          "description": "Enables the subscribe_server command without any pre-configured scope.",
+          "type": "string",
+          "const": "allow-subscribe-server",
+          "markdownDescription": "Enables the subscribe_server command without any pre-configured scope."
+        },
+        {
+          "description": "Denies the subscribe_server command without any pre-configured scope.",
+          "type": "string",
+          "const": "deny-subscribe-server",
+          "markdownDescription": "Denies the subscribe_server command without any pre-configured scope."
+        },
+        {
           "description": "Allows connecting and sending data to a WebSocket server\n#### This default permission set includes:\n\n- `allow-connect`\n- `allow-send`",
           "type": "string",
           "const": "default",

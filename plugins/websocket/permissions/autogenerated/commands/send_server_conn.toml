@@ -1,0 +1,13 @@
+# Automatically generated - DO NOT EDIT!
+
+"$schema" = "../../schemas/schema.json"
+
+[[permission]]
+identifier = "allow-send-server-conn"
+description = "Enables the send_server_conn command without any pre-configured scope."
+commands.allow = ["send_server_conn"]
+
+[[permission]]
+identifier = "deny-send-server-conn"
+description = "Denies the send_server_conn command without any pre-configured scope."
+commands.deny = ["send_server_conn"]

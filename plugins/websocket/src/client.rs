@@ -17,7 +17,7 @@ use crate::{
 };
 
 #[tauri::command]
-pub async fn connect_server<R: Runtime>(
+pub async fn connect<R: Runtime>(
     window: Window<R>,
     url: String,
     on_message: Channel<serde_json::Value>,

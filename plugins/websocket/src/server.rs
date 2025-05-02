@@ -240,7 +240,7 @@ async fn handle_connection<R: Runtime>(
 }
 
 #[tauri::command]
-pub async fn newserver<R: Runtime>(
+pub async fn new_server<R: Runtime>(
     port: u16,
     window: tauri::Window<R>,
     on_connection: Channel<u32>,

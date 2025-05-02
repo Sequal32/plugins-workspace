@@ -2,7 +2,14 @@
 // SPDX-License-Identifier: Apache-2.0
 // SPDX-License-Identifier: MIT
 
-const COMMANDS: &[&str] = &["connect", "send"];
+const COMMANDS: &[&str] = &[
+    "connect",
+    "send",
+    "new_server",
+    "stop_server",
+    "send_server_conn",
+    "subscribe_server",
+];
 
 fn main() {
     tauri_plugin::Builder::new(COMMANDS)
