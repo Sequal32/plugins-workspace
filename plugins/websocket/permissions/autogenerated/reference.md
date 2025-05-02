@@ -6,6 +6,10 @@ Allows connecting and sending data to a WebSocket server
 
 - `allow-connect`
 - `allow-send`
+- `allow-new-server`
+- `allow-subscribe-server`
+- `allow-stop-server`
+- `allow-send-server-conn`
 
 ## Permission Table
 

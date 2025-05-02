@@ -138,7 +138,7 @@ export class WebSocketServer extends EventEmitter {
   }
 
   static async start(port: number): Promise<WebSocketServer> {
-    const onConnection = new Channel<Message>()
+    const onConnection = new Channel<number>()
 
     // Request a new server on the specified port
     let newServerId = await invoke<number>('plugin:websocket|new_server', {
@@ -149,10 +149,7 @@ export class WebSocketServer extends EventEmitter {
     let newServer = new WebSocketServer(newServerId)
 
     // Emit everytime a connection is spawned
-    onConnection.onmessage = async (response: Message) => {
-      if (response.type != 'Text') return
-      let connId = JSON.parse(response.data)
-
+    onConnection.onmessage = async (connId: number) => {
       newServer.emit('connection', WebSocketServerConnection.start(connId))
     }
 

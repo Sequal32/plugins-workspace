@@ -251,7 +251,7 @@ pub async fn new_server<R: Runtime>(
     window: tauri::Window<R>,
     on_connection: Channel<u32>,
     server_manager: tauri::State<'_, ServerManager>,
-) -> Result<(), String> {
+) -> Result<u32, String> {
     let listen = TcpListener::bind(SocketAddr::from(([0, 0, 0, 0], port)))
         .await
         .map_err(|e| format!("Failed to bind to port {}: {}", port, e))?;
@@ -278,7 +278,7 @@ pub async fn new_server<R: Runtime>(
         }
     });
 
-    Ok(())
+    Ok(id)
 }
 
 #[tauri::command]

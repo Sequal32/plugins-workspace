@@ -307,6 +307,18 @@
           "markdownDescription": "Denies the connect command without any pre-configured scope."
         },
         {
+          "description": "Enables the new_server command without any pre-configured scope.",
+          "type": "string",
+          "const": "allow-new-server",
+          "markdownDescription": "Enables the new_server command without any pre-configured scope."
+        },
+        {
+          "description": "Denies the new_server command without any pre-configured scope.",
+          "type": "string",
+          "const": "deny-new-server",
+          "markdownDescription": "Denies the new_server command without any pre-configured scope."
+        },
+        {
           "description": "Enables the send command without any pre-configured scope.",
           "type": "string",
           "const": "allow-send",
@@ -355,10 +367,10 @@
           "markdownDescription": "Denies the subscribe_server command without any pre-configured scope."
         },
         {
-          "description": "Allows connecting and sending data to a WebSocket server\n#### This default permission set includes:\n\n- `allow-connect`\n- `allow-send`",
+          "description": "Allows connecting and sending data to a WebSocket server\n#### This default permission set includes:\n\n- `allow-connect`\n- `allow-send`\n- `allow-new-server`\n- `allow-subscribe-server`\n- `allow-stop-server`\n- `allow-send-server-conn`",
           "type": "string",
           "const": "default",
-          "markdownDescription": "Allows connecting and sending data to a WebSocket server\n#### This default permission set includes:\n\n- `allow-connect`\n- `allow-send`"
+          "markdownDescription": "Allows connecting and sending data to a WebSocket server\n#### This default permission set includes:\n\n- `allow-connect`\n- `allow-send`\n- `allow-new-server`\n- `allow-subscribe-server`\n- `allow-stop-server`\n- `allow-send-server-conn`"
         }
       ]
     }
