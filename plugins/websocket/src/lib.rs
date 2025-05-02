@@ -23,8 +23,8 @@ mod message;
 mod server;
 mod types;
 
-use client::{connect, send};
-use server::{new_server, send_server_conn, stop_server, subscribe_server};
+use client::{connect_server, send};
+use server::{newserver, send_server_conn, stop_server, subscribe_server};
 use types::{ConnectionManager, TlsConnector};
 
 pub fn init<R: Runtime>() -> TauriPlugin<R> {
@@ -51,9 +51,9 @@ impl Builder {
     pub fn build<R: Runtime>(self) -> TauriPlugin<R> {
         PluginBuilder::new("websocket")
             .invoke_handler(tauri::generate_handler![
-                connect,
+                connect_server,
                 send,
-                new_server,
+                newserver,
                 stop_server,
                 send_server_conn,
                 subscribe_server
