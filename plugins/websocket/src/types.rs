@@ -30,7 +30,7 @@ pub enum Error {
     #[error("server not found for the given id: {0}")]
     ServerNotFound(Id),
     #[error("connection channel closed for the given id: {0}")]
-    ConnectionClosed(Id, tauri::Error),
+    ConnectionClosed(Id, String),
     #[error("invalid message type")]
     InvalidMessageType,
 }

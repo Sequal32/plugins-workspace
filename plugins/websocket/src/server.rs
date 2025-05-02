@@ -98,6 +98,7 @@ impl ServerConnectionManager {
         if self.writes.lock().await.remove(&id).is_none() {
             return Err(Error::ConnectionNotFound(id));
         }
+        self.subscribers.lock().await.remove(&id);
         Ok(())
     }
 
@@ -214,12 +215,24 @@ async fn handle_connection<R: Runtime>(
 
     on_connection
         .send(id)
-        .map_err(|e| Error::ConnectionClosed(id, e))?;
+        .map_err(|e| Error::ConnectionClosed(id, e.to_string()))?;
 
     tauri::async_runtime::spawn(async move {
         loop {
             match read.next().await {
-                Some(Ok(Message::Close(_))) | Some(Err(_)) | None => {
+                Some(Err(e)) => {
+                    eprintln!("Error reading message: {}", e);
+                    let connections = window.state::<ServerConnectionManager>();
+                    if let Err(e) = connections
+                        .send_error_to_subscribers(id, Error::ConnectionClosed(id, e.to_string()))
+                        .await
+                    {
+                        eprintln!("Error sending error to subscribers: {}", e);
+                    }
+                    break;
+                }
+                None => {
+                    // Stream closed gracefully, should've sent "Close" message, no need to do anything
                     break;
                 }
                 Some(Ok(message)) => {

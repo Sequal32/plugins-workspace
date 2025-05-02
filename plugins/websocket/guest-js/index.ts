@@ -150,7 +150,10 @@ export class WebSocketServer extends EventEmitter {
 
     // Emit everytime a connection is spawned
     onConnection.onmessage = async (connId: number) => {
-      newServer.emit('connection', WebSocketServerConnection.start(connId))
+      newServer.emit(
+        'connection',
+        await WebSocketServerConnection.start(connId)
+      )
     }
 
     return newServer
@@ -177,6 +180,7 @@ export class WebSocketServerConnection extends EventEmitter {
     let newConnection = new WebSocketServerConnection(id)
 
     onMessage.onmessage = async (response: Message) => {
+      console.log(response)
       if (response.type == 'Text') {
         newConnection.emit('message', response.data)
       } else if (response.type == 'Close') {
