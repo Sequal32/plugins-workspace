@@ -1,14 +1,14 @@
 use serde::{Deserialize, Serialize};
 use tokio_tungstenite::tungstenite::{protocol::CloseFrame as ProtocolCloseFrame, Message};
 
-#[derive(Deserialize, Serialize)]
+#[derive(Deserialize, Serialize, Clone)]
 /// A representation of a Websocket [ProtocolCloseFrame] that can be sent over Tauri
 pub struct CloseFrame {
     pub code: u16,
     pub reason: String,
 }
 
-#[derive(Deserialize, Serialize)]
+#[derive(Deserialize, Serialize, Clone)]
 #[serde(tag = "type", content = "data")]
 /// A representation of a Websocket [Message] that can be sent over Tauri
 pub enum WebSocketMessage {

@@ -9,7 +9,7 @@
     html_favicon_url = "https://github.com/tauri-apps/tauri/raw/dev/app-icon.png"
 )]
 
-use manager::{ServerConnectionManager, ServerManager};
+use manager::{ConnectionManager, ServerManager};
 use tauri::{
     plugin::{Builder as PluginBuilder, TauriPlugin},
     Manager, Runtime,
@@ -24,9 +24,9 @@ mod message;
 mod server;
 mod types;
 
-use client::{connect, send};
-use command::{new_server, send_server_conn, stop_server, subscribe_server};
-use types::{ConnectionManager, TlsConnector};
+use client::connect;
+use command::{new_server, send, stop_server, subscribe};
+use types::TlsConnector;
 
 pub fn init<R: Runtime>() -> TauriPlugin<R> {
     Builder::default().build()
@@ -56,12 +56,10 @@ impl Builder {
                 send,
                 new_server,
                 stop_server,
-                send_server_conn,
-                subscribe_server
+                subscribe
             ])
             .setup(|app, _api| {
                 app.manage(ConnectionManager::default());
-                app.manage(ServerConnectionManager::default());
                 app.manage(ServerManager::default());
                 #[cfg(any(feature = "rustls-tls", feature = "native-tls"))]
                 app.manage(TlsConnector(Mutex::new(self.tls_connector)));

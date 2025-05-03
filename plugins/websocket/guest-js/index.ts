@@ -58,77 +58,6 @@ export type Message =
   | MessageKind<'Close', CloseFrame | null>
   | MessageKind<'Error', string> // Can only be received from Rust, should never be constructed
 
-export class WebSocket {
-  id: number
-  private readonly listeners: Set<(arg: Message) => void>
-
-  constructor(id: number, listeners: Set<(arg: Message) => void>) {
-    this.id = id
-    this.listeners = listeners
-  }
-
-  static async connect(
-    url: string,
-    config?: ConnectionConfig
-  ): Promise<WebSocket> {
-    const listeners: Set<(arg: Message) => void> = new Set()
-
-    const onMessage = new Channel<Message>()
-    onMessage.onmessage = (message: Message): void => {
-      listeners.forEach((l) => {
-        l(message)
-      })
-    }
-
-    if (config?.headers) {
-      config.headers = Array.from(new Headers(config.headers).entries())
-    }
-
-    return await invoke<number>('plugin:websocket|connect', {
-      url,
-      onMessage,
-      config
-    }).then((id) => new WebSocket(id, listeners))
-  }
-
-  addListener(cb: (arg: Message) => void): () => void {
-    this.listeners.add(cb)
-
-    return () => {
-      this.listeners.delete(cb)
-    }
-  }
-
-  async send(message: Message | string | number[]): Promise<void> {
-    let m: Message
-    if (typeof message === 'string') {
-      m = { type: 'Text', data: message }
-    } else if (typeof message === 'object' && 'type' in message) {
-      m = message
-    } else if (Array.isArray(message)) {
-      m = { type: 'Binary', data: message }
-    } else {
-      throw new Error(
-        'invalid `message` type, expected a `{ type: string, data: any }` object, a string or a numeric array'
-      )
-    }
-    await invoke('plugin:websocket|send', {
-      id: this.id,
-      message: m
-    })
-  }
-
-  async disconnect(): Promise<void> {
-    await this.send({
-      type: 'Close',
-      data: {
-        code: 1000,
-        reason: 'Disconnected by client'
-      }
-    })
-  }
-}
-
 export class WebSocketServer extends EventEmitter {
   id: number
 
@@ -150,10 +79,7 @@ export class WebSocketServer extends EventEmitter {
 
     // Emit everytime a connection is spawned
     onConnection.onmessage = async (connId: number) => {
-      newServer.emit(
-        'connection',
-        await WebSocketServerConnection.start(connId)
-      )
+      newServer.emit('connection', await WebSocket.start(connId))
     }
 
     return newServer
@@ -164,7 +90,7 @@ export class WebSocketServer extends EventEmitter {
   }
 }
 
-export class WebSocketServerConnection extends EventEmitter {
+export class WebSocket extends EventEmitter {
   id: number
 
   constructor(id: number) {
@@ -172,12 +98,22 @@ export class WebSocketServerConnection extends EventEmitter {
     this.id = id
   }
 
-  static async start(id: number): Promise<WebSocketServerConnection> {
+  static async connect(url: string, config?: ConnectionConfig) {
+    let newConnId = await invoke<number>('plugin:websocket|connect', {
+      url,
+      config
+    })
+
+    return await WebSocket.start(newConnId)
+  }
+
+  /** @internal */
+  static async start(id: number): Promise<WebSocket> {
     const onMessage = new Channel<Message>()
     // Subscribe to connection
-    await invoke<number>('plugin:websocket|subscribe_server', { id, onMessage })
+    await invoke<number>('plugin:websocket|subscribe', { id, onMessage })
 
-    let newConnection = new WebSocketServerConnection(id)
+    let newConnection = new WebSocket(id)
 
     onMessage.onmessage = async (response: Message) => {
       console.log(response)

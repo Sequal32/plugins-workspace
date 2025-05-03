@@ -1,6 +1,6 @@
 use std::collections::HashMap;
 
-use futures_util::stream::SplitSink;
+use futures_util::stream::{SplitSink, SplitStream};
 use serde::{ser::Serializer, Deserialize, Serialize};
 use tokio::{net::TcpStream, sync::Mutex};
 #[cfg(not(any(feature = "rustls-tls", feature = "native-tls")))]
@@ -13,6 +13,7 @@ use tokio_tungstenite::{
 pub type Id = u32;
 pub type WebSocket = WebSocketStream<MaybeTlsStream<TcpStream>>;
 pub type WebSocketWriter = SplitSink<WebSocket, Message>;
+pub type WebSocketReader = SplitStream<WebSocket>;
 pub type Result<T> = std::result::Result<T, Error>;
 
 #[derive(Debug, thiserror::Error)]
@@ -25,6 +26,8 @@ pub enum Error {
     InvalidHeaderValue(#[from] tokio_tungstenite::tungstenite::http::header::InvalidHeaderValue),
     #[error(transparent)]
     InvalidHeaderName(#[from] tokio_tungstenite::tungstenite::http::header::InvalidHeaderName),
+    #[error(transparent)]
+    FailedToStartServer(#[from] std::io::Error),
     #[error("failed to stop server {0}")]
     FailedToStopServer(Id),
     #[error("server not found for the given id: {0}")]
@@ -51,9 +54,6 @@ pub enum Max {
     None,
     Number(usize),
 }
-
-#[derive(Default)]
-pub struct ConnectionManager(pub Mutex<HashMap<Id, WebSocketWriter>>);
 
 #[derive(Deserialize)]
 #[serde(rename_all = "camelCase")]

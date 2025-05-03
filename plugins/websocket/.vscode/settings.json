@@ -1,0 +1,15 @@
+{
+  "github.copilot.enable": {
+    "*": true,
+    "plaintext": true,
+    "markdown": true,
+    "scminput": false,
+    "yaml": true,
+    "java": true,
+    "rust": true,
+    "r": false,
+    "rmd": false,
+    "latex": false,
+    "typescriptreact": true
+  }
+}

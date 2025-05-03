@@ -1,34 +1,35 @@
-use futures_util::{stream::SplitStream, StreamExt};
+use futures_util::StreamExt;
 use log::error;
 use tauri::{ipc::Channel, Manager, Runtime};
-use tokio::{
-    net::{TcpListener, TcpStream},
-    sync::oneshot::Receiver,
-};
-use tokio_tungstenite::accept_async;
+use tokio::{net::TcpListener, sync::oneshot::Receiver};
+use tokio_tungstenite::{accept_async, MaybeTlsStream};
 
 use crate::{
-    manager::{ServerConnectionManager, ServerManager},
-    types::Error,
+    manager::{ConnectionManager, ServerManager},
+    types::{Error, WebSocket, WebSocketReader},
 };
 
 /// Starts handling the WebSocket connection.
-async fn accept_connection<R: Runtime>(
-    socket: TcpStream,
-    on_connection: Channel<u32>,
+pub async fn handle_connection<R: Runtime>(
+    ws_stream: WebSocket,
     window: tauri::Window<R>,
+    on_connection: Option<Channel<u32>>,
 ) -> Result<(), Error> {
-    let ws_stream = accept_async(socket).await?;
     let (write, mut read) = ws_stream.split();
 
-    let manager = window.state::<ServerConnectionManager>();
+    // Add the connection to the manager
+    let manager = window.state::<ConnectionManager>();
     let id = manager.add_connection(write).await;
 
-    if let Err(e) = on_connection.send(id) {
-        error!("Failed to send connection ID {}: {}", id, e);
-        return Err(Error::ConnectionClosed(id, e.to_string()));
+    // Inform Tauri about the new connection
+    if let Some(channel) = on_connection {
+        channel.send(id).map_err(|e| {
+            error!("Failed to send connection ID {}: {}", id, e);
+            Error::ConnectionClosed(id, e.to_string())
+        })?;
     }
 
+    // Handle incoming messages
     let handler = ConnectionHandler::new(id, window.clone());
 
     tauri::async_runtime::spawn(async move {
@@ -36,7 +37,7 @@ async fn accept_connection<R: Runtime>(
             error!("Error handling connection {}: {}", id, e);
         }
 
-        if let Err(e) = handler.on_shutdown().await {
+        if let Err(e) = handler.shutdown().await {
             error!("Error shutting down connection {}: {}", id, e);
         }
     });
@@ -44,6 +45,7 @@ async fn accept_connection<R: Runtime>(
     Ok(())
 }
 
+/// Start handling incoming connections to the server
 pub async fn handle_server<R: Runtime>(
     listen: TcpListener,
     id: u32,
@@ -54,7 +56,15 @@ pub async fn handle_server<R: Runtime>(
     loop {
         tokio::select! {
             Ok((stream, addr)) = listen.accept() => {
-                if let Err(e) = accept_connection(stream, on_connection.clone(), window.clone()).await {
+                let stream = match accept_async(MaybeTlsStream::Plain(stream)).await {
+                    Ok(stream) => stream,
+                    Err(e) => {
+                        error!("Error accepting connection from {}: {}", addr, e);
+                        continue;
+                    }
+                };
+
+                if let Err(e) = handle_connection(stream,  window.clone(), Some(on_connection.clone())).await {
                     eprintln!("Error handling connection from {}: {}", addr, e);
                 }
             }
@@ -83,7 +93,7 @@ impl<R: Runtime> ConnectionHandler<R> {
         &self,
         error: tokio_tungstenite::tungstenite::Error,
     ) -> Result<(), Error> {
-        let connections = self.window.state::<ServerConnectionManager>();
+        let connections = self.window.state::<ConnectionManager>();
         connections
             .send_error_to_subscribers(self.id, Error::ConnectionClosed(self.id, error.to_string()))
             .await
@@ -93,22 +103,19 @@ impl<R: Runtime> ConnectionHandler<R> {
         &self,
         message: tokio_tungstenite::tungstenite::Message,
     ) -> Result<(), Error> {
-        let connections = self.window.state::<ServerConnectionManager>();
+        let connections = self.window.state::<ConnectionManager>();
         connections
             .send_message_to_subscribers(self.id, message.into())
             .await
     }
 
-    async fn on_shutdown(&self) -> Result<(), Error> {
-        let connections = self.window.state::<ServerConnectionManager>();
+    async fn shutdown(&self) -> Result<(), Error> {
+        let connections = self.window.state::<ConnectionManager>();
         connections.remove_connection(self.id).await
     }
 
     /// Processes incoming WebSocket messages.
-    async fn process_messages(
-        &self,
-        read: &mut SplitStream<tokio_tungstenite::WebSocketStream<TcpStream>>,
-    ) -> Result<(), Error> {
+    async fn process_messages(&self, read: &mut WebSocketReader) -> Result<(), Error> {
         while let Some(message_result) = read.next().await {
             match message_result {
                 Ok(message) => self.send_message_to_subscribers(message).await?,
@@ -120,7 +127,7 @@ impl<R: Runtime> ConnectionHandler<R> {
         }
 
         // Remove the connection from the manager
-        let connections = self.window.state::<ServerConnectionManager>();
+        let connections = self.window.state::<ConnectionManager>();
         connections.remove_connection(self.id).await?;
 
         Ok(())

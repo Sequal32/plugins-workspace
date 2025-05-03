@@ -12,7 +12,7 @@ use tokio_tungstenite::{tungstenite::Message, WebSocketStream};
 
 use crate::{
     message::WebSocketMessage,
-    types::{Error, Id},
+    types::{Error, Id, WebSocket, WebSocketWriter},
 };
 
 #[derive(Default)]
@@ -52,17 +52,14 @@ impl ServerManager {
     }
 }
 
-pub struct ServerConnectionManager {
-    writes: Mutex<HashMap<Id, SplitSink<WebSocketStream<TcpStream>, Message>>>,
-    subscribers: Mutex<HashMap<Id, Vec<Channel<serde_json::Value>>>>,
+pub struct ConnectionManager {
+    writes: Mutex<HashMap<Id, WebSocketWriter>>,
+    subscribers: Mutex<HashMap<Id, Vec<Channel<WebSocketMessage>>>>,
     next_id: AtomicU32,
 }
 
-impl ServerConnectionManager {
-    pub async fn add_connection(
-        &self,
-        write: SplitSink<WebSocketStream<TcpStream>, Message>,
-    ) -> Id {
+impl ConnectionManager {
+    pub async fn add_connection(&self, write: WebSocketWriter) -> Id {
         let id = self.next_id.fetch_add(1, Relaxed); // TODO: Use a proper ID generation strategy
         self.writes.lock().await.insert(id, write);
         self.subscribers.lock().await.insert(id, Vec::new());
@@ -86,27 +83,10 @@ impl ServerConnectionManager {
         }
     }
 
-    pub async fn subscribe(
-        &self,
-        id: Id,
-        channel: Channel<serde_json::Value>,
-    ) -> Result<(), Error> {
+    pub async fn subscribe(&self, id: Id, channel: Channel<WebSocketMessage>) -> Result<(), Error> {
         // Add the channel to the subscribers list
         if let Some(subscribers) = self.subscribers.lock().await.get_mut(&id) {
             subscribers.push(channel);
-            Ok(())
-        } else {
-            Err(Error::ConnectionNotFound(id))
-        }
-    }
-
-    pub async fn send_value_to_subscribers(
-        &self,
-        id: Id,
-        value: serde_json::Value,
-    ) -> Result<(), Error> {
-        if let Some(subscribers) = self.subscribers.lock().await.get_mut(&id) {
-            subscribers.retain(|subscriber| subscriber.send(value.clone()).is_ok());
             Ok(())
         } else {
             Err(Error::ConnectionNotFound(id))
@@ -118,8 +98,12 @@ impl ServerConnectionManager {
         id: Id,
         message: WebSocketMessage,
     ) -> Result<(), Error> {
-        self.send_value_to_subscribers(id, serde_json::to_value(message).unwrap())
-            .await
+        if let Some(subscribers) = self.subscribers.lock().await.get_mut(&id) {
+            subscribers.retain(|subscriber| subscriber.send(message.clone()).is_ok());
+            Ok(())
+        } else {
+            Err(Error::ConnectionNotFound(id))
+        }
     }
 
     pub async fn send_error_to_subscribers(&self, id: Id, error: Error) -> Result<(), Error> {
@@ -128,7 +112,7 @@ impl ServerConnectionManager {
     }
 }
 
-impl Default for ServerConnectionManager {
+impl Default for ConnectionManager {
     fn default() -> Self {
         Self {
             writes: Mutex::new(HashMap::new()),
