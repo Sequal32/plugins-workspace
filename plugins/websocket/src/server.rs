@@ -126,10 +126,6 @@ impl<R: Runtime> ConnectionHandler<R> {
             }
         }
 
-        // Remove the connection from the manager
-        let connections = self.window.state::<ConnectionManager>();
-        connections.remove_connection(self.id).await?;
-
         Ok(())
     }
 }

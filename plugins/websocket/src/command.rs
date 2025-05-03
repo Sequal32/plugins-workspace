@@ -1,5 +1,6 @@
 use std::net::SocketAddr;
 
+use log::debug;
 use tauri::{ipc::Channel, Runtime, State};
 use tokio::net::TcpListener;
 
@@ -41,7 +42,13 @@ pub async fn new_server<R: Runtime>(
     server_manager: State<'_, ServerManager>,
 ) -> Result<u32> {
     let listen = TcpListener::bind(SocketAddr::from(([0, 0, 0, 0], port))).await?;
+
+    debug!("Listening on {}", listen.local_addr()?);
+
     let (id, kill_req) = server_manager.add_server().await;
+
+    debug!("New WebSocket server created with ID: {}", id);
+
     tauri::async_runtime::spawn(handle_server(listen, id, kill_req, window, on_connection));
 
     Ok(id)

@@ -7,9 +7,8 @@ Allows connecting and sending data to a WebSocket server
 - `allow-connect`
 - `allow-send`
 - `allow-new-server`
-- `allow-subscribe-server`
+- `allow-subscribe`
 - `allow-stop-server`
-- `allow-send-server-conn`
 
 ## Permission Table
 
@@ -146,6 +145,32 @@ Enables the stop_server command without any pre-configured scope.
 <td>
 
 Denies the stop_server command without any pre-configured scope.
+
+</td>
+</tr>
+
+<tr>
+<td>
+
+`websocket:allow-subscribe`
+
+</td>
+<td>
+
+Enables the subscribe command without any pre-configured scope.
+
+</td>
+</tr>
+
+<tr>
+<td>
+
+`websocket:deny-subscribe`
+
+</td>
+<td>
+
+Denies the subscribe command without any pre-configured scope.
 
 </td>
 </tr>

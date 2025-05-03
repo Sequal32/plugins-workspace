@@ -142,7 +142,7 @@ export class WebSocket extends EventEmitter {
         'invalid `message` type, expected a `{ type: string, data: any }` object, a string or a numeric array'
       )
     }
-    await invoke('plugin:websocket|send_server_conn', {
+    await invoke('plugin:websocket|send', {
       id: this.id,
       message: m
     })
