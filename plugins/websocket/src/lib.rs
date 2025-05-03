@@ -9,7 +9,7 @@
     html_favicon_url = "https://github.com/tauri-apps/tauri/raw/dev/app-icon.png"
 )]
 
-use server::{ServerConnectionManager, ServerManager};
+use manager::{ServerConnectionManager, ServerManager};
 use tauri::{
     plugin::{Builder as PluginBuilder, TauriPlugin},
     Manager, Runtime,
@@ -18,13 +18,14 @@ use tokio::sync::Mutex;
 use tokio_tungstenite::Connector;
 
 mod client;
-mod handler;
+mod command;
+mod manager;
 mod message;
 mod server;
 mod types;
 
 use client::{connect, send};
-use server::{new_server, send_server_conn, stop_server, subscribe_server};
+use command::{new_server, send_server_conn, stop_server, subscribe_server};
 use types::{ConnectionManager, TlsConnector};
 
 pub fn init<R: Runtime>() -> TauriPlugin<R> {

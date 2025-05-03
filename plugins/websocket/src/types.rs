@@ -31,8 +31,6 @@ pub enum Error {
     ServerNotFound(Id),
     #[error("connection channel closed for the given id: {0}")]
     ConnectionClosed(Id, String),
-    #[error("invalid message type")]
-    InvalidMessageType,
 }
 
 impl Serialize for Error {
